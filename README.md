@@ -8,4 +8,4 @@
 * go get "github.com/aws/aws-sdk-go/service/ecs"
 * go get "github.com/Sirupsen/logrus"
 1. Run the application. Basic version such as:
-go run src/ecs-scheduler/scheduler.go --task-definition <task_definition> --region <region>  --cluster <cluster_name>
+	go run src/ecs-scheduler/scheduler.go --task-definition <task_definition> --region <region>  --cluster <cluster_name>
