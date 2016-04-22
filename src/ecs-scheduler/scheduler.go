@@ -1,34 +1,40 @@
 package main
 
 import (
-	"fmt"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"os"
+	"flag"
+	"errors"
+	log "github.com/Sirupsen/logrus"
 )
 
 //Specifies the number of items to be returned for paginating.
-const numberPerCall = int64(10)
+const MAX_RESULTS_PER_CALL = int64(10)
+const SCHEDULER_NAME = string("svc.customECSscheduler")
 
 //Returns a []*string for the list of all the Container Instance ARNs for a given cluster
-func getInstanceARNs(clusterName string, region string) (output []*string, output_err string) {
-	fmt.Println("Function: getInstanceARNs")
-	//Change from number array to allow dynamic growing
+func getInstanceARNs(clusterName string, svc *ecs.ECS) (output []*string, erro error) {
+	log.Info("Function: getInstanceARNs")
+
 	var ciARNs []*string
 	ciARNs = make([]*string, 0)
-	svc := ecs.New(session.New(), aws.NewConfig().WithRegion(region))
-	check := aws.String("checkInitial")
+
+	nextToken := aws.String("nextToken")
 	params := &ecs.ListContainerInstancesInput{
 		Cluster:    aws.String(clusterName),
-		MaxResults: aws.Int64(numberPerCall),
+		MaxResults: aws.Int64(MAX_RESULTS_PER_CALL),
 	}
 
-	for ok := true; ok; ok = (check != nil) {
+	for ok := true; ok; ok = (nextToken != nil) {
 		resp, err := svc.ListContainerInstances(params)
 		if err != nil {
-			return nil, "Error: FIX THESE to be errors not strings" //exit
+			return nil, err
+		} else if len(resp.ContainerInstanceArns) == 0 {
+            return nil, errors.New("Function: getInstanceARNs: No Container Instances in Cluster")
 		}
+
 
 		var tempciARNs []*string
 		tempciARNs = make([]*string, len(resp.ContainerInstanceArns))
@@ -43,103 +49,154 @@ func getInstanceARNs(clusterName string, region string) (output []*string, outpu
 		if resp.NextToken != nil {
 			params = &ecs.ListContainerInstancesInput{
 				Cluster:    aws.String(clusterName),
-				MaxResults: aws.Int64(numberPerCall),
+				MaxResults: aws.Int64(MAX_RESULTS_PER_CALL),
 				NextToken:  aws.String(*resp.NextToken),
 			}
-			check = resp.NextToken
+			nextToken = resp.NextToken
 		} else {
-			check = nil
+			nextToken = nil
 		}
 	}
-	return ciARNs, ""
+	return ciARNs, nil
 }
 
 //Returns the details of all the Container Instances in the given cluster
-func describeContainerInstances(clusterName string, region string) (output *ecs.DescribeContainerInstancesOutput, output_err string) {
-	fmt.Println("Function: describeContainerInstances - getInstanceARNs")
-	instanceARNs, errC := getInstanceARNs(clusterName, region)
-	if errC != "" {
-		return nil, errC
-	} else if len(instanceARNs) == 0 {
-		return nil, "Check: No instanceARNs"
+func describeContainerInstances(clusterName string, svc *ecs.ECS) (output *ecs.DescribeContainerInstancesOutput, erro error) {
+	log.Info("Function: describeContainerInstances - getInstanceARNs")
+	instanceARNs, err := getInstanceARNs(clusterName, svc)
+	if err != nil {
+		return nil, err
 	}
 
-	fmt.Println("Function: describeContainerInstances")
-	svc := ecs.New(session.New(), aws.NewConfig().WithRegion(region))
+	log.Info("Function: describeContainerInstances")
 	params := &ecs.DescribeContainerInstancesInput{
 		Cluster:            aws.String(clusterName),
 		ContainerInstances: instanceARNs,
 	}
 	resp, err := svc.DescribeContainerInstances(params)
 	if err != nil {
-		return nil, "Error: DescribeContainerInstances"
+		return nil, err
 	}
 
-	return resp, ""
+	return resp, nil
 }
 
 //Starts the task on the given Container Instance
-func startTask(instanceARN string, cluster string, taskDefinition string, region string) {
-	fmt.Printf("Function: startTask: %s, %s\n", instanceARN, taskDefinition)
-	//take this out to minimise the number of times this is done as its nor required
-	svc := ecs.New(session.New(), aws.NewConfig().WithRegion(region))
+func startTask(instanceARN string, cluster string, svc *ecs.ECS, taskDefinition string) (erro error) {
+	log.WithFields(log.Fields{
+		  "arn": instanceARN,
+		  "task-definition": taskDefinition,
+        }).Info("Function: startTask")
+
 	var containers []*string
 	containers = make([]*string, 1)
 	containers[0] = aws.String(instanceARN)
+	
 	params := &ecs.StartTaskInput{
 		ContainerInstances: containers,
 		TaskDefinition: aws.String(taskDefinition),
 		Cluster: aws.String(cluster),
-		//StartedBy: aws.String("svc.customECSscheduler")
+		StartedBy: aws.String(SCHEDULER_NAME),
 	}
 
 	resp, err := svc.StartTask(params)
 	if err != nil {
-		fmt.Println(err.Error())
-		return
+		return err
 	}
 
-	fmt.Println(resp)
+	if len(resp.Failures) != 0 {
+    	log.WithFields(log.Fields {
+			"response": resp,
+			}).Error("Response from creating Task")
+    	return errors.New("Failures listed in response.")
+	}
+
+	log.WithFields(log.Fields {
+		"response": resp,
+		}).Info("Response from creating Task")
+
+	return nil
 }
 
 //Determines which Container Instance is currently running the least number of Tasks
-func leastTasks(instances *ecs.DescribeContainerInstancesOutput) (instanceARN string, output_err string) {
-	fmt.Println("Function: leastTasks\n\n")
+func leastTasks(instances *ecs.DescribeContainerInstancesOutput) (instanceARN string, erro error) {
+	log.Info("Function: leastTasks")
 	instancesSlice := instances.ContainerInstances
-	//sort.Sort(instances.ContainerInstances.RunningTasksCount)
 
 	selected := instancesSlice[0]
 	for _, each := range instancesSlice {
-		fmt.Printf("Output: ContainerInstanceArn: %s RunningTasksCount: %d\n",
-			*each.ContainerInstanceArn, *each.RunningTasksCount)
-		if *each.RunningTasksCount < *selected.RunningTasksCount {
+		log.WithFields(log.Fields{
+			"arn": *each.ContainerInstanceArn,
+			"runningTasks": *each.RunningTasksCount,
+			"pendingTasks": *each.PendingTasksCount,
+		}).Debug("Checking details of Container Instance")
+		if (*each.RunningTasksCount + *each.PendingTasksCount) < *selected.RunningTasksCount {
 			selected = each
 		}
 	}
     
-    //Add better error supporting
-	fmt.Printf("\n\nContainer Instance selected: %s\n", *selected.ContainerInstanceArn)
-	return *selected.ContainerInstanceArn, "nil"
+	log.WithFields(log.Fields{
+		"arn": *selected.ContainerInstanceArn,
+		}).Info("Container Instance selected")
+	return *selected.ContainerInstanceArn, nil
+}
+
+func connectToECS(region string) (svc *ecs.ECS) {
+  return ecs.New(session.New(), aws.NewConfig().WithRegion(region))
 }
 
 func main() {
-	fmt.Println("Starting scheduler...")
+	//Flags
+	// - List of all the flags for which scheduler that is to be used.
+    leastTasksSched := flag.Bool("leastTasks", true, "Use this for the LeastTasks running schedule.")
 
-    //Add check for commandline arguments
-	instances, err := describeContainerInstances(os.Args[1], os.Args[2])
-	if err != "" {
-		fmt.Println(err)
-		os.Exit(1)
+    //Flags for how the application runs
+    debug := flag.Bool("debug", false, "Sets the debug level of output.")
+    
+    //Settings
+    cluster := flag.String("cluster", "", "Name of the cluster to schedule against.")
+    region := flag.String("region", "", "Region that the cluster is in.")
+    taskDefinition := flag.String("task-definition", "", "The Task Definition to be used when scheduling the Task.")
+
+    flag.Parse()
+
+    if *cluster == "" || *region == "" || *taskDefinition == "" {
+		log.Error("Error: Insufficient command-line options haven't been supplied. Use --help to see required options.")
+    	os.Exit(1)
+    }
+    
+    if *debug == true {
+      log.SetLevel(log.DebugLevel)
+    }
+
+	log.Info("Starting scheduler...")
+
+    svc := connectToECS(*region)
+
+	instances, err := describeContainerInstances(*cluster, svc)
+	if err != nil {
+		log.Error(err)
+		os.Exit(2)
 	}
 	
 	instance, err := leastTasks(instances)
-	if err != "nil" {
-		fmt.Println(err)
-		os.Exit(1)
+	if err != nil {
+		log.Error(err)
+		os.Exit(3)
 	}
-    fmt.Println(instance)
-    //for a display method add a show of pending(maybe even to leastTasks to ensure Pendinsgs are counted on display but this is a basic test not sure I care that much)
-	startTask(instance, os.Args[1], os.Args[3], os.Args[2])
+    
+    //Selection of which scheduler to be used based off the flag that was passed in. Default is leastTasks.
+    var runTaskError error
+    switch {
+    	//Room to move to add additional schedules in the future.
+    	case *leastTasksSched == true :
+    		runTaskError = startTask(instance, *cluster, svc, *taskDefinition)
+    }
 
-	fmt.Println("Exiting scheduler...")
+    if runTaskError != nil {
+		log.Error(runTaskError)
+		os.Exit(4)
+	}
+
+	log.Info("Exitiing scheduler...")
 }
