@@ -160,7 +160,7 @@ func main() {
 	flag.Parse()
 
 	if *cluster == "" || *region == "" || *taskDefinition == "" {
-		log.Error("Error: Insufficient command-line options haven't been supplied. Use --help to see required options.")
+		log.Error("Error: Insufficient command-line options have been supplied. Use --help to see the required options.")
 		os.Exit(1)
 	}
 
