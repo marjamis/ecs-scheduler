@@ -1,4 +1,5 @@
 # ECS Scheduler
+[![Build Status](https://travis-ci.org/marjamis/go_ecs-scheduler.svg?branch=master)](https://travis-ci.org/marjamis/go_ecs-scheduler)
 
 ## To build and run:
 1. Clone repository.
