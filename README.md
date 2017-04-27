@@ -1,5 +1,8 @@
 # ECS Scheduler
 [![Build Status](https://travis-ci.org/marjamis/go_ecs-scheduler.svg?branch=master)](https://travis-ci.org/marjamis/go_ecs-scheduler)
+[![Coverage Status](https://coveralls.io/repos/github/marjamis/go_ecs-scheduler/badge.svg?branch=master)](https://coveralls.io/github/marjamis/go_ecs-scheduler?branch=master)
+[![CircleCI](https://circleci.com/gh/marjamis/go_ecs-scheduler.svg?style=svg)](https://circleci.com/gh/marjamis/go_ecs-scheduler)
+[![Codeship Status for marjamis/go_ecs-scheduler](https://app.codeship.com/projects/42c1f6a0-ee70-0134-6d5c-62b847b8d86d/status?branch=master)](https://app.codeship.com/projects/208712)
 
 ## To build and run:
 1. Clone repository.
