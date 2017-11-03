@@ -10,9 +10,11 @@ import (
 	"os"
 )
 
-//Specifies the number of items to be returned for paginating.
-const MAX_RESULTS_PER_CALL = int64(10)
-const SCHEDULER_NAME = string("svc.customECSscheduler")
+//MaxResultsPerCall Specifies the number of items to be returned for paginating.
+const MaxResultsPerCall = int64(10)
+
+//SchedulerName The name used as the TaskGroup to show what scheduled the Task.
+const SchedulerName = string("svc.customECSscheduler")
 
 //Returns a []*string for the list of all the Container Instance ARNs for a given cluster
 func getInstanceARNs(clusterName string, svc *ecs.ECS) (output []*string, erro error) {
@@ -24,7 +26,7 @@ func getInstanceARNs(clusterName string, svc *ecs.ECS) (output []*string, erro e
 	nextToken := aws.String("nextToken")
 	params := &ecs.ListContainerInstancesInput{
 		Cluster:    aws.String(clusterName),
-		MaxResults: aws.Int64(MAX_RESULTS_PER_CALL),
+		MaxResults: aws.Int64(MaxResultsPerCall),
 	}
 
 	for ok := true; ok; ok = (nextToken != nil) {
@@ -48,7 +50,7 @@ func getInstanceARNs(clusterName string, svc *ecs.ECS) (output []*string, erro e
 		if resp.NextToken != nil {
 			params = &ecs.ListContainerInstancesInput{
 				Cluster:    aws.String(clusterName),
-				MaxResults: aws.Int64(MAX_RESULTS_PER_CALL),
+				MaxResults: aws.Int64(MaxResultsPerCall),
 				NextToken:  aws.String(*resp.NextToken),
 			}
 			nextToken = resp.NextToken
@@ -95,7 +97,7 @@ func startTask(instanceARN string, cluster string, svc *ecs.ECS, taskDefinition 
 		ContainerInstances: containers,
 		TaskDefinition:     aws.String(taskDefinition),
 		Cluster:            aws.String(cluster),
-		StartedBy:          aws.String(SCHEDULER_NAME),
+		StartedBy:          aws.String(SchedulerName),
 	}
 
 	resp, err := svc.StartTask(params)
@@ -107,7 +109,7 @@ func startTask(instanceARN string, cluster string, svc *ecs.ECS, taskDefinition 
 		log.WithFields(log.Fields{
 			"response": resp,
 		}).Error("Response from creating Task")
-		return errors.New("Failures listed in response.")
+		return errors.New("Failures listed in response")
 	}
 
 	log.WithFields(log.Fields{
