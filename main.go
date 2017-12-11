@@ -12,7 +12,7 @@ import (
 
 //Specifies the number of items to be returned for paginating.
 const MAX_RESULTS_PER_CALL = int64(10)
-const SCHEDULER_NAME = string("svc.customECSscheduler")
+const SCHEDULER_NAME = string("svc/customECSscheduler")
 
 //Returns a []*string for the list of all the Container Instance ARNs for a given cluster
 func getInstanceARNs(clusterName string, svc *ecs.ECS) (output []*string, erro error) {

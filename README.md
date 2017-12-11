@@ -17,3 +17,9 @@
    and if you're happy with the current state compile a statically compiled version with:
 
 	make build
+
+## TODO
+* OpenTracing
+* Blox
+* Do one of the above with a go plugin - https://golang.org/pkg/plugin/
+* ensure contexts are available thought the application
