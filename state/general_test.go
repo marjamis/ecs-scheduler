@@ -1,33 +1,16 @@
-package main
+package state
 
 import (
 	"errors"
-	// "reflect"
 	"strconv"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ecs"
-	"github.com/aws/aws-sdk-go/service/ecs/ecsiface"
 	"github.com/stretchr/testify/assert"
 
 	log "github.com/sirupsen/logrus"
 )
-
-func init() {
-	log.SetLevel(log.WarnLevel)
-}
-
-// Define a mock struct to be used in your unit tests
-type mockECSClient struct {
-	ecsiface.ECSAPI
-	ciARNs []*string
-
-	lciError error
-	lciCount int32
-
-	dciError error
-}
 
 func generateCIARNs(count int, m *mockECSClient) {
 	cis := make([]*string, count)
@@ -140,43 +123,29 @@ func TestGetInstanceARNs(t *testing.T) {
 func TestDescribeContainerInstances(t *testing.T) {
 	m := &mockECSClient{}
 
-	m.lciError = errors.New("Unknown error")
-	t.Run("Error in response from getInstanceARNs", func(t *testing.T) {
-		_, err := describeContainerInstances("testing", m)
+	generateCIARNs(0, m)
+	t.Run("0 Container Instances", func(t *testing.T) {
+		_, err := DescribeContainerInstances("testing", m)
 		if err != nil {
-			assert.Equal(t, m.lciError, err)
+			assert.Equal(t, errors.New("Function: getInstanceARNs: No Container Instances in Cluster"), err)
 		}
 	})
 
-	cis := make([]*string, 2)
-	cis[0] = aws.String("arn:aws:ecs:us-west-2:109951093165:container-instance/00000000-11a7-469d-b903-6587a1f11bca")
-	cis[1] = aws.String("arn:aws:ecs:us-west-2:109951093165:container-instance/11111111-11a7-469d-b903-6587a1f11bca")
-	m.ciARNs = append(m.ciARNs, cis...)
-	m.lciError = nil
+	generateCIARNs(2, m)
+	t.Run("2 Container Instances", func(t *testing.T) {
+		_, err := DescribeContainerInstances("testing", m)
+		if err != nil {
+			t.FailNow()
+		}
+	})
+
+	//fix this as dependency makes ordering required of unit test should change up the mock
 	m.dciError = errors.New("Unknown error")
-	t.Run("Error in response", func(t *testing.T) {
-		_, err := describeContainerInstances("testing", m)
+	t.Run("Error in response from getInstanceARNs", func(t *testing.T) {
+		_, err := DescribeContainerInstances("testing", m)
 		if err != nil {
 			assert.Equal(t, m.dciError, err)
 		}
 	})
-
-	// m.err = nil
-	// t.Run("Normal response", func(t *testing.T) {
-	// 	output, err := describeContainerInstances("testing", m)
-	// 	if err != nil {
-	// 		t.FailNow()
-	// 	}
-	//
-	// 	assert.Equal(t, reflect.ValueOf(&ecs.DescribeContainerInstancesOutput{}), reflect.ValueOf(output))
-	//
-	// })
-
-	// What about when more than 100 CIs to describe
-	// t.Run("Error in response", func(t *testing.T) {
-	// 	_, err := describeContainerInstances("testing", m)
-	// 	if err != nil {
-	// 		assert.Equal(t, m.err, err)
-	// 	}
-	// })
+	m.dciError = nil
 }

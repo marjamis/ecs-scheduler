@@ -1,6 +1,9 @@
 package main
 
 import (
+	"ecs-scheduler/action"
+	"ecs-scheduler/schedulers"
+	"ecs-scheduler/state"
 	"flag"
 	"os"
 
@@ -35,14 +38,14 @@ func main() {
 
 	svc := connectToECS(*region)
 
-	instances, err := describeContainerInstances(*cluster, svc)
+	instances, err := state.DescribeContainerInstances(*cluster, svc)
 	if err != nil {
 		log.Error(err)
 		os.Exit(2)
 	}
 
-	instance, err := leastTasks(instances)
-	if err != nil {
+	instance := schedulers.LeastTasks(instances)
+	if &instance == nil {
 		log.Error(err)
 		os.Exit(3)
 	}
@@ -52,7 +55,7 @@ func main() {
 	switch {
 	//Room to move to add additional schedules in the future.
 	case *leastTasksSched == true:
-		runTaskError = startTask(instance, *cluster, svc, *taskDefinition)
+		runTaskError = action.StartTask(instance, *cluster, svc, *taskDefinition)
 	}
 
 	if runTaskError != nil {
