@@ -11,7 +11,7 @@ import (
 )
 
 //Returns a []*string for the list of all the Container Instance ARNs for a given cluster
-func getInstanceARNs(clusterName string, svc ecsiface.ECSAPI) (output []*string, erro error) {
+func getInstanceARNs(clusterName *string, svc ecsiface.ECSAPI) (output []*string, erro error) {
 	log.WithFields(log.Fields{
 		"function": "getInstanceARNs",
 	}).Info("start")
@@ -21,7 +21,7 @@ func getInstanceARNs(clusterName string, svc ecsiface.ECSAPI) (output []*string,
 
 	nextToken := aws.String("nextToken")
 	params := &ecs.ListContainerInstancesInput{
-		Cluster:    aws.String(clusterName),
+		Cluster:    aws.String(*clusterName),
 		MaxResults: aws.Int64(MaxResultsPerCall),
 	}
 
@@ -45,7 +45,7 @@ func getInstanceARNs(clusterName string, svc ecsiface.ECSAPI) (output []*string,
 
 		if resp.NextToken != nil {
 			params = &ecs.ListContainerInstancesInput{
-				Cluster:    aws.String(clusterName),
+				Cluster:    aws.String(*clusterName),
 				MaxResults: aws.Int64(MaxResultsPerCall),
 				NextToken:  aws.String(*resp.NextToken),
 			}
@@ -59,7 +59,7 @@ func getInstanceARNs(clusterName string, svc ecsiface.ECSAPI) (output []*string,
 }
 
 //DescribeContainerInstances Returns the details of all the Container Instances in the given cluster
-func DescribeContainerInstances(clusterName string, svc ecsiface.ECSAPI) (output *ecs.DescribeContainerInstancesOutput, erro error) {
+func DescribeContainerInstances(clusterName *string, svc ecsiface.ECSAPI) (output *ecs.DescribeContainerInstancesOutput, erro error) {
 	log.Info("Function: describeContainerInstances - getInstanceARNs")
 	instanceARNs, err := getInstanceARNs(clusterName, svc)
 	if err != nil {
@@ -68,7 +68,7 @@ func DescribeContainerInstances(clusterName string, svc ecsiface.ECSAPI) (output
 
 	log.Info("Function: describeContainerInstances")
 	params := &ecs.DescribeContainerInstancesInput{
-		Cluster:            aws.String(clusterName),
+		Cluster:            aws.String(*clusterName),
 		ContainerInstances: instanceARNs,
 	}
 	resp, err := svc.DescribeContainerInstances(params)

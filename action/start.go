@@ -11,7 +11,7 @@ import (
 )
 
 //StartTask Starts the task on the given Container Instance
-func StartTask(instanceARN *string, cluster string, svc ecsiface.ECSAPI, taskDefinition string) (erro error) {
+func StartTask(instanceARN *string, cluster *string, svc ecsiface.ECSAPI, taskDefinition string) (erro error) {
 	log.WithFields(log.Fields{
 		"arn":             instanceARN,
 		"task-definition": taskDefinition,
@@ -24,7 +24,7 @@ func StartTask(instanceARN *string, cluster string, svc ecsiface.ECSAPI, taskDef
 	params := &ecs.StartTaskInput{
 		ContainerInstances: containers,
 		TaskDefinition:     aws.String(taskDefinition),
-		Cluster:            aws.String(cluster),
+		Cluster:            aws.String(*cluster),
 		StartedBy:          aws.String(SchedulerName),
 	}
 

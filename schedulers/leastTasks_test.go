@@ -1,13 +1,11 @@
 package schedulers
 
 import (
-	// "reflect"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/stretchr/testify/assert"
-	// log "github.com/sirupsen/logrus"
 )
 
 func TestLeastTasks(t *testing.T) {

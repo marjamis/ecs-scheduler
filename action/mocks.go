@@ -8,13 +8,6 @@ import (
 //Define a mock struct to be used in your unit tests
 type mockECSClient struct {
 	ecsiface.ECSAPI
-	ciARNs []*string
-
-	lciError error
-	lciCount int32
-
-	dciError error
-
 	stError         error
-	StartTaskOutput ecs.StartTaskOutput
+	startTaskOutput ecs.StartTaskOutput
 }

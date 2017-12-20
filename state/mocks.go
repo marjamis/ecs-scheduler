@@ -1,7 +1,6 @@
 package state
 
 import (
-	"github.com/aws/aws-sdk-go/service/ecs"
 	"github.com/aws/aws-sdk-go/service/ecs/ecsiface"
 )
 
@@ -14,7 +13,4 @@ type mockECSClient struct {
 	lciCount int32
 
 	dciError error
-
-	stError         error
-	StartTaskOutput ecs.StartTaskOutput
 }

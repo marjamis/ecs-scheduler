@@ -9,15 +9,17 @@ import (
 )
 
 func (m *mockECSClient) StartTask(*ecs.StartTaskInput) (*ecs.StartTaskOutput, error) {
-	return &m.StartTaskOutput, m.stError
+	return &m.startTaskOutput, m.stError
 }
 
 func TestStartTask(t *testing.T) {
 	m := &mockECSClient{}
+	clusterName := "testing"
+
 	t.Run("Error", func(t *testing.T) {
 		m.stError = errors.New("Unknown Error")
 		instanceARN := "arn:aws:ecs:us-west-2:109951093165:container-instance/11111111-11a7-469d-b903-1"
-		err := StartTask(&instanceARN, "testing", m, "arn:aws:ecs:us-west-2:109951093165:task-definition/website:1")
+		err := StartTask(&instanceARN, &clusterName, m, "arn:aws:ecs:us-west-2:109951093165:task-definition/website:1")
 		assert.Error(t, err)
 		m.stError = nil
 	})
@@ -29,16 +31,16 @@ func TestStartTask(t *testing.T) {
 		Arn:    &instanceARN,
 		Reason: &failure,
 	}
-	m.StartTaskOutput.Failures = failures
+	m.startTaskOutput.Failures = failures
 	t.Run("Returning a failure", func(t *testing.T) {
 		instanceARN := "arn:aws:ecs:us-west-2:109951093165:container-instance/11111111-11a7-469d-b903-1"
-		StartTask(&instanceARN, "testing", m, "arn:aws:ecs:us-west-2:109951093165:task-definition/website:1")
+		StartTask(&instanceARN, &clusterName, m, "arn:aws:ecs:us-west-2:109951093165:task-definition/website:1")
 	})
-	m.StartTaskOutput.Failures = nil
+	m.startTaskOutput.Failures = nil
 
 	t.Run("Normal functioning", func(t *testing.T) {
 		instanceARN := "arn:aws:ecs:us-west-2:109951093165:container-instance/11111111-11a7-469d-b903-1"
-		err := StartTask(&instanceARN, "testing", m, "arn:aws:ecs:us-west-2:109951093165:task-definition/website:1")
+		err := StartTask(&instanceARN, &clusterName, m, "arn:aws:ecs:us-west-2:109951093165:task-definition/website:1")
 		assert.NoError(t, err)
 	})
 }

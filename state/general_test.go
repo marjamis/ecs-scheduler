@@ -12,6 +12,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+func init() {
+	log.SetLevel(log.DebugLevel)
+}
+
 func generateCIARNs(count int, m *mockECSClient) {
 	cis := make([]*string, count)
 	for i := 0; i < count; i++ {
@@ -72,12 +76,13 @@ func (m *mockECSClient) DescribeContainerInstances(*ecs.DescribeContainerInstanc
 
 func TestGetInstanceARNs(t *testing.T) {
 	m := &mockECSClient{}
+	clusterName := "testing"
 	// if testing.Short() {
 	//     t.Skip("skipping test in short mode.")
 	// }
 
 	t.Run("0 Container Instances", func(t *testing.T) {
-		_, err := getInstanceARNs("testing", m)
+		_, err := getInstanceARNs(&clusterName, m)
 		if err != nil {
 			assert.Equal(t, errors.New("Function: getInstanceARNs: No Container Instances in Cluster"), err)
 		}
@@ -85,7 +90,7 @@ func TestGetInstanceARNs(t *testing.T) {
 
 	generateCIARNs(2, m)
 	t.Run("2 Container Instances", func(t *testing.T) {
-		output, err := getInstanceARNs("testing", m)
+		output, err := getInstanceARNs(&clusterName, m)
 		if err != nil {
 			t.FailNow()
 		}
@@ -97,7 +102,7 @@ func TestGetInstanceARNs(t *testing.T) {
 
 	generateCIARNs(200, m)
 	t.Run("Uses NextToken", func(t *testing.T) {
-		output, err := getInstanceARNs("testing", m)
+		output, err := getInstanceARNs(&clusterName, m)
 		if err != nil {
 			t.FailNow()
 		}
@@ -113,7 +118,7 @@ func TestGetInstanceARNs(t *testing.T) {
 
 	m.lciError = errors.New("Unknown error")
 	t.Run("Error in response", func(t *testing.T) {
-		_, err := getInstanceARNs("testing", m)
+		_, err := getInstanceARNs(&clusterName, m)
 		if err != nil {
 			assert.Equal(t, m.lciError, err)
 		}
@@ -122,10 +127,11 @@ func TestGetInstanceARNs(t *testing.T) {
 
 func TestDescribeContainerInstances(t *testing.T) {
 	m := &mockECSClient{}
+	clusterName := "testing"
 
 	generateCIARNs(0, m)
 	t.Run("0 Container Instances", func(t *testing.T) {
-		_, err := DescribeContainerInstances("testing", m)
+		_, err := DescribeContainerInstances(&clusterName, m)
 		if err != nil {
 			assert.Equal(t, errors.New("Function: getInstanceARNs: No Container Instances in Cluster"), err)
 		}
@@ -133,7 +139,7 @@ func TestDescribeContainerInstances(t *testing.T) {
 
 	generateCIARNs(2, m)
 	t.Run("2 Container Instances", func(t *testing.T) {
-		_, err := DescribeContainerInstances("testing", m)
+		_, err := DescribeContainerInstances(&clusterName, m)
 		if err != nil {
 			t.FailNow()
 		}
@@ -142,7 +148,7 @@ func TestDescribeContainerInstances(t *testing.T) {
 	//fix this as dependency makes ordering required of unit test should change up the mock
 	m.dciError = errors.New("Unknown error")
 	t.Run("Error in response from getInstanceARNs", func(t *testing.T) {
-		_, err := DescribeContainerInstances("testing", m)
+		_, err := DescribeContainerInstances(&clusterName, m)
 		if err != nil {
 			assert.Equal(t, m.dciError, err)
 		}

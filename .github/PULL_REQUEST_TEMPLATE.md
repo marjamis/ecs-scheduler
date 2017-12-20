@@ -6,7 +6,7 @@
 
 ### Testing
 <!-- How was this tested? -->
-- [ ] Builds on Linux (`make build`)
+- [ ] Builds on Linux (`make local_build`)
 - [ ] Unit tests on Linux (`make test`)
 
 New tests cover the changes: <!-- yes|no -->
