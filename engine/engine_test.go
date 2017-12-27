@@ -38,12 +38,12 @@ func TestRun(t *testing.T) {
 		assert.Equal(t, ExitStateError, Run())
 	})
 
-	// t.Run("Normal values nothing configured", func(t *testing.T) {
-	// 	debug = true
-	// 	leastTasksSched = true
-	// 	cluster = "testing"
-	// 	region = "us-west-2"
-	// 	taskDefinition = "testing:1"
-	// 	assert.Equal(t, ExitNoValidContainerInstance, Run())
-	// })
+	t.Run("Normal values nothing configured", func(t *testing.T) {
+		debug = true
+		leastTasksSched = true
+		cluster = "testing"
+		region = "us-west-2"
+		taskDefinition = "testing:1"
+		assert.Equal(t, ExitNoValidContainerInstance, Run())
+	})
 }

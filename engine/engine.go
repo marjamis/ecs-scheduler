@@ -43,7 +43,9 @@ func ConnectToECS(region *string) (svc *ecs.ECS) {
 //Run will run the engines CLI component
 func Run() int {
 	if cluster == "" || region == "" || taskDefinition == "" {
-		log.Error("Error: Insufficient command-line options have been supplied. Use --help to see the required options.")
+		log.WithFields(log.Fields{
+			"function": "engine.Run",
+		}).Error("Error: Insufficient command-line options have been supplied. Use --help to see the required options.")
 		return ExitInvalidCLIOptions
 	}
 
@@ -51,19 +53,21 @@ func Run() int {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	log.Info("Starting scheduler...")
-
 	svc := ConnectToECS(&region)
 
 	instances, err := state.DescribeContainerInstances(&cluster, svc)
 	if err != nil {
-		log.Error(err)
+		log.WithFields(log.Fields{
+			"function": "engine.Run",
+		}).Error(err)
 		return ExitStateError
 	}
 
 	instance := schedulers.LeastTasks(instances)
 	if &instance == nil {
-		log.Error(err)
+		log.WithFields(log.Fields{
+			"function": "engine.Run",
+		}).Error("No valid Container Instance returned to start task on")
 		return ExitNoValidContainerInstance
 	}
 
@@ -76,11 +80,11 @@ func Run() int {
 	}
 
 	if runTaskError != nil {
-		log.Error(runTaskError)
+		log.WithFields(log.Fields{
+			"function": "engine.Run",
+		}).Error(runTaskError)
 		return ExitStartTaskFailure
 	}
-
-	log.Info("Exiting scheduler...")
 
 	return ExitSuccess
 }

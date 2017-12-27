@@ -12,6 +12,10 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var (
+	clusterName = "testing"
+)
+
 func init() {
 	log.SetLevel(log.DebugLevel)
 }
@@ -49,7 +53,6 @@ func (m *mockECSClient) ListContainerInstances(input *ecs.ListContainerInstances
 
 		if (tokenNum + *input.MaxResults) < int64(len(m.ciARNs)) {
 			val := tokenNum + *input.MaxResults
-			log.Info(val)
 			string2 := strconv.FormatInt(int64(val), 10)
 			token = &string2
 		}
@@ -58,11 +61,6 @@ func (m *mockECSClient) ListContainerInstances(input *ecs.ListContainerInstances
 		string2 := strconv.FormatInt(*input.MaxResults, 10)
 		token = &string2
 	}
-
-	log.WithFields(log.Fields{
-		"len(cis)": len(cis),
-		"tokenNum": token,
-	}).Debug("here")
 
 	return &ecs.ListContainerInstancesOutput{
 		ContainerInstanceArns: cis,
@@ -75,33 +73,17 @@ func (m *mockECSClient) DescribeContainerInstances(*ecs.DescribeContainerInstanc
 }
 
 func TestGetInstanceARNs(t *testing.T) {
-	m := &mockECSClient{}
-	clusterName := "testing"
-	// if testing.Short() {
-	//     t.Skip("skipping test in short mode.")
-	// }
-
 	t.Run("0 Container Instances", func(t *testing.T) {
+		m := &mockECSClient{}
 		_, err := getInstanceARNs(&clusterName, m)
 		if err != nil {
 			assert.Equal(t, errors.New("Function: getInstanceARNs: No Container Instances in Cluster"), err)
 		}
 	})
 
-	generateCIARNs(2, m)
 	t.Run("2 Container Instances", func(t *testing.T) {
-		output, err := getInstanceARNs(&clusterName, m)
-		if err != nil {
-			t.FailNow()
-		}
-
-		for i := 0; i < len(output); i++ {
-			assert.Equal(t, *m.ciARNs[i], *output[i])
-		}
-	})
-
-	generateCIARNs(200, m)
-	t.Run("Uses NextToken", func(t *testing.T) {
+		m := &mockECSClient{}
+		generateCIARNs(2, m)
 		output, err := getInstanceARNs(&clusterName, m)
 		if err != nil {
 			t.FailNow()
@@ -109,49 +91,90 @@ func TestGetInstanceARNs(t *testing.T) {
 
 		for i := 0; i < len(output); i++ {
 			log.WithFields(log.Fields{
-				"inmemory": *m.ciARNs[i],
-				"response": *output[i],
-			}).Debug("here")
+				"in-memory": *m.ciARNs[i],
+				"response":  *output[i],
+			}).Debug()
 			assert.Equal(t, *m.ciARNs[i], *output[i])
 		}
 	})
 
-	m.lciError = errors.New("Unknown error")
+	t.Run("Uses NextToken", func(t *testing.T) {
+		m := &mockECSClient{}
+		generateCIARNs(200, m)
+		output, err := getInstanceARNs(&clusterName, m)
+		if err != nil {
+			t.FailNow()
+		}
+
+		for i := 0; i < len(output); i++ {
+			log.WithFields(log.Fields{
+				"in-memory": *m.ciARNs[i],
+				"response":  *output[i],
+			}).Debug()
+			assert.Equal(t, *m.ciARNs[i], *output[i])
+		}
+	})
+
 	t.Run("Error in response", func(t *testing.T) {
+		m := &mockECSClient{}
+		m.lciError = errors.New("Unknown error")
 		_, err := getInstanceARNs(&clusterName, m)
 		if err != nil {
 			assert.Equal(t, m.lciError, err)
 		}
 	})
+
+	t.Run("1..1000 Container Instances", func(t *testing.T) {
+		if testing.Short() {
+			t.Skip("skipping test in short mode.")
+		}
+		for i := 1; i <= 1000; i++ {
+			m := &mockECSClient{}
+			generateCIARNs(i, m)
+
+			output, err := getInstanceARNs(&clusterName, m)
+			if err != nil {
+				t.FailNow()
+			}
+
+			for j := 0; j < len(output); j++ {
+				log.WithFields(log.Fields{
+					"in-memory": *m.ciARNs[j],
+					"response":  *output[j],
+				}).Debug()
+				assert.Equal(t, *m.ciARNs[j], *output[j])
+			}
+		}
+	})
 }
 
 func TestDescribeContainerInstances(t *testing.T) {
-	m := &mockECSClient{}
-	clusterName := "testing"
+	t.Run("Error in response from getInstanceARNs", func(t *testing.T) {
+		m := &mockECSClient{}
+		// Requires at least 1 Container Instance otherwise gets caught in the 0 Container Instance error output
+		generateCIARNs(1, m)
+		m.dciError = errors.New("Unknown error")
+		_, err := DescribeContainerInstances(&clusterName, m)
+		if err != nil {
+			assert.Equal(t, m.dciError, err)
+		}
+	})
 
-	generateCIARNs(0, m)
 	t.Run("0 Container Instances", func(t *testing.T) {
+		m := &mockECSClient{}
+		generateCIARNs(0, m)
 		_, err := DescribeContainerInstances(&clusterName, m)
 		if err != nil {
 			assert.Equal(t, errors.New("Function: getInstanceARNs: No Container Instances in Cluster"), err)
 		}
 	})
 
-	generateCIARNs(2, m)
-	t.Run("2 Container Instances", func(t *testing.T) {
+	t.Run("1 Container Instances", func(t *testing.T) {
+		m := &mockECSClient{}
+		generateCIARNs(1, m)
 		_, err := DescribeContainerInstances(&clusterName, m)
 		if err != nil {
 			t.FailNow()
 		}
 	})
-
-	//fix this as dependency makes ordering required of unit test should change up the mock
-	m.dciError = errors.New("Unknown error")
-	t.Run("Error in response from getInstanceARNs", func(t *testing.T) {
-		_, err := DescribeContainerInstances(&clusterName, m)
-		if err != nil {
-			assert.Equal(t, m.dciError, err)
-		}
-	})
-	m.dciError = nil
 }

@@ -8,7 +8,9 @@ import (
 
 //LeastTasks Determines which Container Instance is currently running the least number of Tasks
 func LeastTasks(instances *ecs.DescribeContainerInstancesOutput) (instanceARN *string) {
-	log.Info("Function: leastTasks")
+	log.WithFields(log.Fields{
+		"function": "schedulers.LeastTasks",
+	}).Info("Starting")
 	var instancesSlice []*ecs.ContainerInstance
 	if instances != nil {
 		instancesSlice = instances.ContainerInstances
@@ -23,12 +25,9 @@ func LeastTasks(instances *ecs.DescribeContainerInstancesOutput) (instanceARN *s
 		return nil
 	}
 
-	log.WithFields(log.Fields{
-		"arn": *selected.ContainerInstanceArn,
-	}).Info("Container Instance currently selected")
-
 	for _, each := range instancesSlice {
 		log.WithFields(log.Fields{
+			"function":     "schedulers.LeastTasks",
 			"arn":          *each.ContainerInstanceArn,
 			"runningTasks": *each.RunningTasksCount,
 			"pendingTasks": *each.PendingTasksCount,
@@ -39,7 +38,8 @@ func LeastTasks(instances *ecs.DescribeContainerInstancesOutput) (instanceARN *s
 	}
 
 	log.WithFields(log.Fields{
-		"arn": *selected.ContainerInstanceArn,
+		"function": "schedulers.LeastTasks",
+		"arn":      *selected.ContainerInstanceArn,
 	}).Info("Container Instance selected")
 	return selected.ContainerInstanceArn
 }

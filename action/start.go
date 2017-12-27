@@ -13,9 +13,10 @@ import (
 //StartTask Starts the task on the given Container Instance
 func StartTask(instanceARN *string, cluster *string, svc ecsiface.ECSAPI, taskDefinition string) (erro error) {
 	log.WithFields(log.Fields{
+		"function":        "action.StartTask",
 		"arn":             instanceARN,
 		"task-definition": taskDefinition,
-	}).Info("Function: startTask")
+	}).Debug()
 
 	var containers []*string
 	containers = make([]*string, 1)
@@ -35,14 +36,15 @@ func StartTask(instanceARN *string, cluster *string, svc ecsiface.ECSAPI, taskDe
 
 	if len(resp.Failures) != 0 {
 		log.WithFields(log.Fields{
+			"function": "action.StartTask",
 			"response": resp,
-		}).Error("Response from creating Task")
+		}).Error(resp.Failures)
 		return errors.New("Failures listed in response")
 	}
 
 	log.WithFields(log.Fields{
+		"function": "action.StartTask",
 		"response": resp,
-	}).Info("Response from creating Task")
-
+	}).Info()
 	return nil
 }

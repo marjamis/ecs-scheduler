@@ -13,18 +13,18 @@ import (
 //Returns a []*string for the list of all the Container Instance ARNs for a given cluster
 func getInstanceARNs(clusterName *string, svc ecsiface.ECSAPI) (output []*string, erro error) {
 	log.WithFields(log.Fields{
-		"function": "getInstanceARNs",
-	}).Info("start")
+		"function": "state.getInstanceARNs",
+	}).Info("Starting")
 
 	var ciARNs []*string
 	ciARNs = make([]*string, 0)
 
-	nextToken := aws.String("nextToken")
 	params := &ecs.ListContainerInstancesInput{
 		Cluster:    aws.String(*clusterName),
 		MaxResults: aws.Int64(MaxResultsPerCall),
 	}
 
+	nextToken := aws.String("nextToken")
 	for ok := true; ok; ok = (nextToken != nil) {
 		resp, err := svc.ListContainerInstances(params)
 		if err != nil {
@@ -60,19 +60,27 @@ func getInstanceARNs(clusterName *string, svc ecsiface.ECSAPI) (output []*string
 
 //DescribeContainerInstances Returns the details of all the Container Instances in the given cluster
 func DescribeContainerInstances(clusterName *string, svc ecsiface.ECSAPI) (output *ecs.DescribeContainerInstancesOutput, erro error) {
-	log.Info("Function: describeContainerInstances - getInstanceARNs")
+	log.WithFields(log.Fields{
+		"function": "state.DescribeContainerInstances",
+	}).Info("Starting")
+
 	instanceARNs, err := getInstanceARNs(clusterName, svc)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"function": "state.DescribeContainerInstances",
+		}).Error(err)
 		return nil, err
 	}
 
-	log.Info("Function: describeContainerInstances")
 	params := &ecs.DescribeContainerInstancesInput{
 		Cluster:            aws.String(*clusterName),
 		ContainerInstances: instanceARNs,
 	}
 	resp, err := svc.DescribeContainerInstances(params)
 	if err != nil {
+		log.WithFields(log.Fields{
+			"function": "state.DescribeContainerInstances",
+		}).Error(err)
 		return nil, err
 	}
 
