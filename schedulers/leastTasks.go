@@ -15,7 +15,7 @@ func LeastTasks(instances *ecs.DescribeContainerInstancesOutput) (instanceARN *s
 	if instances != nil {
 		instancesSlice = instances.ContainerInstances
 	} else {
-		return
+		return nil
 	}
 
 	var selected *ecs.ContainerInstance
@@ -41,5 +41,6 @@ func LeastTasks(instances *ecs.DescribeContainerInstancesOutput) (instanceARN *s
 		"function": "schedulers.LeastTasks",
 		"arn":      *selected.ContainerInstanceArn,
 	}).Info("Container Instance selected")
+	log.Info(*selected.ContainerInstanceArn)
 	return selected.ContainerInstanceArn
 }

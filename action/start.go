@@ -11,10 +11,10 @@ import (
 )
 
 //StartTask Starts the task on the given Container Instance
-func StartTask(instanceARN *string, cluster *string, svc ecsiface.ECSAPI, taskDefinition string) (erro error) {
+func StartTask(instanceARN *string, cluster *string, svc ecsiface.ECSAPI, taskDefinition string) error {
 	log.WithFields(log.Fields{
 		"function":        "action.StartTask",
-		"arn":             instanceARN,
+		"arn":             *instanceARN,
 		"task-definition": taskDefinition,
 	}).Debug()
 

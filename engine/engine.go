@@ -10,24 +10,26 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/ecs"
+	"github.com/aws/aws-sdk-go/service/ecs/ecsiface"
 
 	log "github.com/sirupsen/logrus"
 )
 
 var (
-	debug           bool
-	leastTasksSched bool
-	cluster         string
-	region          string
-	taskDefinition  string
+	debug          bool
+	scheduler      string
+	cluster        string
+	region         string
+	taskDefinition string
+	statel         = "default"
 )
 
 func init() {
 	//Flags
 	flag.BoolVar(&debug, "debug", false, "Sets the debug level of output.")
-	flag.BoolVar(&leastTasksSched, "leastTasks", true, "Use this for the LeastTasks running schedule.")
 
 	//Settings
+	flag.StringVar(&scheduler, "scheduler", "leastTasks", "Use this for the LeastTasks running schedule.")
 	flag.StringVar(&cluster, "cluster", "", "Name of the cluster to schedule against.")
 	flag.StringVar(&region, "region", "", "Region that the cluster is in.")
 	flag.StringVar(&taskDefinition, "task-definition", "", "The Task Definition to be used when scheduling the Task.")
@@ -54,35 +56,43 @@ func Run() int {
 	}
 
 	svc := ConnectToECS(&region)
+	return selectProcess(svc)
+}
 
-	instances, err := state.DescribeContainerInstances(&cluster, svc)
-	if err != nil {
-		log.WithFields(log.Fields{
-			"function": "engine.Run",
-		}).Error(err)
-		return ExitStateError
+func selectProcess(svc ecsiface.ECSAPI) int {
+	var instances *ecs.DescribeContainerInstancesOutput
+	var err error
+	switch statel {
+	default:
+		instances, err = state.DescribeContainerInstances(&cluster, svc)
+		if err != nil {
+			log.WithFields(log.Fields{
+				"function": "engine.selectProcess",
+			}).Error(err)
+			return ExitStateError
+		}
 	}
 
-	instance := schedulers.LeastTasks(instances)
-	if &instance == nil {
-		log.WithFields(log.Fields{
-			"function": "engine.Run",
-		}).Error("No valid Container Instance returned to start task on")
-		return ExitNoValidContainerInstance
+	var instance *string
+	switch scheduler {
+	case "leastTasks":
+		fallthrough
+	default:
+		instance = schedulers.LeastTasks(instances)
+		if instance == nil {
+			log.WithFields(log.Fields{
+				"function": "engine.selectProcess",
+			}).Error("No valid Container Instance returned to start task on")
+			return ExitNoValidContainerInstance
+		}
 	}
 
-	//Selection of which scheduler to be used based off the flag that was passed in. Default is leastTasks.
-	var runTaskError error
-	switch {
-	//Room to move to add additional schedules in the future.
-	case leastTasksSched == true:
-		runTaskError = action.StartTask(instance, &cluster, svc, taskDefinition)
-	}
-
-	if runTaskError != nil {
+	log.Warn(instance)
+	startTaskError := action.StartTask(instance, &cluster, svc, taskDefinition)
+	if startTaskError != nil {
 		log.WithFields(log.Fields{
-			"function": "engine.Run",
-		}).Error(runTaskError)
+			"function": "engine.selectProcess",
+		}).Error(startTaskError)
 		return ExitStartTaskFailure
 	}
 
