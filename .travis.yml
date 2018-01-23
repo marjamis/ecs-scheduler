@@ -16,14 +16,14 @@ install:
   - go get -u github.com/golang/dep/cmd/dep
   - go get -v -t -d ./...
   - go get golang.org/x/tools/cmd/cover
-  - go get github.com/mattn/goveralls
+  # - go get github.com/mattn/goveralls
 
 jobs:
   include:
     - stage: test
       script: make test
-    - stage: coveralls
-      script: $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+    # - stage: coveralls
+    #   script: $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
     - stage: build
       script: make local_build
 
