@@ -1,9 +1,9 @@
 package main
 
 import (
-	"ecs-scheduler/engine"
-
 	"os"
+
+	"github.com/marjamis/ecs-scheduler/engine"
 )
 
 func main() {

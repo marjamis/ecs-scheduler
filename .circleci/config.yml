@@ -1,0 +1,56 @@
+version: 2
+# https://circleci.com/docs/2.0/test/ - Guide to call CircleCI without a commit
+jobs:
+  build:
+    docker:
+      - image: circleci/golang:1.8
+    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    environment:
+      TZ: "/usr/share/zoneinfo/Australia/Sydney"
+      development: true
+    steps:
+      - checkout
+      - run:
+          name: Build binary
+          command: make local_build
+      - run:
+          name: Run binary for simple compilation test
+          command: $GOPATH/bin/ecs-scheduler
+  test:
+    docker:
+      - image: circleci/golang:1.8
+    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+    environment:
+      TZ: "/usr/share/zoneinfo/Australia/Sydney"
+      development: true
+    steps:
+      - checkout
+      - run:
+          name: Install dependency manager, future work
+          command: go get -u github.com/golang/dep/cmd/dep
+      - run:
+          name: Install all dependencies, future work as above
+          command: go get -v -t -d ./...
+      - run:
+          name: Run tests as specified
+          command: make test
+      - store_artifacts:
+          path: coverage.out
+          destination: coverage
+
+workflows:
+  version: 2
+  all:
+    jobs:
+      - test:
+        branches:
+          only:
+            - master
+            - /*/
+      - build:
+          branches:
+            only:
+              - master
+              - /*/
+            requires:
+              - test

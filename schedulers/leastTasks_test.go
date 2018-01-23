@@ -1,6 +1,7 @@
 package schedulers
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -26,7 +27,7 @@ func TestLeastTasks(t *testing.T) {
 		cis := make([]*ecs.ContainerInstance, 1)
 		val := int64(1)
 		cis[0] = &ecs.ContainerInstance{
-			ContainerInstanceArn: aws.String("arn:aws:ecs:us-west-2:109951093165:container-instance/11111111-11a7-469d-b903-1"),
+			ContainerInstanceArn: aws.String("arn:aws:ecs:us-west-2:101234567891:container-instance/11111111-11a7-469d-b903-1"),
 			RunningTasksCount:    &val,
 			PendingTasksCount:    &val,
 		}
@@ -34,7 +35,7 @@ func TestLeastTasks(t *testing.T) {
 			ContainerInstances: cis,
 		}
 		data := LeastTasks(instances)
-		assert.Equal(t, "arn:aws:ecs:us-west-2:109951093165:container-instance/11111111-11a7-469d-b903-1", *data)
+		assert.Equal(t, "arn:aws:ecs:us-west-2:101234567891:container-instance/11111111-11a7-469d-b903-1", *data)
 	})
 
 	t.Run("2 Container Instances", func(t *testing.T) {
@@ -42,12 +43,12 @@ func TestLeastTasks(t *testing.T) {
 		val := int64(2)
 		val2 := int64(1)
 		cis[0] = &ecs.ContainerInstance{
-			ContainerInstanceArn: aws.String("arn:aws:ecs:us-west-2:109951093165:container-instance/11111111-11a7-469d-b903-1"),
+			ContainerInstanceArn: aws.String("arn:aws:ecs:us-west-2:101234567891:container-instance/11111111-11a7-469d-b903-1"),
 			RunningTasksCount:    &val,
 			PendingTasksCount:    &val,
 		}
 		cis[1] = &ecs.ContainerInstance{
-			ContainerInstanceArn: aws.String("arn:aws:ecs:us-west-2:109951093165:container-instance/11111111-11a7-469d-b903-2"),
+			ContainerInstanceArn: aws.String("arn:aws:ecs:us-west-2:101234567891:container-instance/11111111-11a7-469d-b903-2"),
 			RunningTasksCount:    &val2,
 			PendingTasksCount:    &val2,
 		}
@@ -55,6 +56,12 @@ func TestLeastTasks(t *testing.T) {
 			ContainerInstances: cis,
 		}
 		data := LeastTasks(instances)
-		assert.Equal(t, "arn:aws:ecs:us-west-2:109951093165:container-instance/11111111-11a7-469d-b903-2", *data)
+		assert.Equal(t, "arn:aws:ecs:us-west-2:101234567891:container-instance/11111111-11a7-469d-b903-2", *data)
 	})
+}
+
+func ExampleLeastTasks() {
+	fmt.Println("arn:aws:ecs:us-west-2:101234567891:container-instance/11111111-11a7-469d-b903-1")
+	// Output:
+	// arn:aws:ecs:us-west-2:101234567891:container-instance/11111111-11a7-469d-b903-1
 }

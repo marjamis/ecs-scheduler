@@ -21,6 +21,5 @@ Always write a clear log message for your commits. One-line messages are fine fo
 ## Coding conventions
 
 Start reading our code and you'll get the hang of it. We optimize for readability:
-
   * We indent based off of go lint which should be validated for.
   * We avoid logic in views, putting HTML generators into helpers

@@ -7,7 +7,7 @@ import (
 )
 
 //LeastTasks Determines which Container Instance is currently running the least number of Tasks
-func LeastTasks(instances *ecs.DescribeContainerInstancesOutput) (instanceARN *string) {
+func LeastTasks(instances *ecs.DescribeContainerInstancesOutput) *string {
 	log.WithFields(log.Fields{
 		"function": "schedulers.LeastTasks",
 	}).Info("Starting")

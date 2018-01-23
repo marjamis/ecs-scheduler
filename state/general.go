@@ -11,7 +11,7 @@ import (
 )
 
 //Returns a []*string for the list of all the Container Instance ARNs for a given cluster
-func getInstanceARNs(clusterName *string, svc ecsiface.ECSAPI) (output []*string, erro error) {
+func getInstanceARNs(clusterName *string, svc ecsiface.ECSAPI) ([]*string, error) {
 	log.WithFields(log.Fields{
 		"function": "state.getInstanceARNs",
 	}).Info("Starting")
@@ -59,7 +59,7 @@ func getInstanceARNs(clusterName *string, svc ecsiface.ECSAPI) (output []*string
 }
 
 //DescribeContainerInstances Returns the details of all the Container Instances in the given cluster
-func DescribeContainerInstances(clusterName *string, svc ecsiface.ECSAPI) (output *ecs.DescribeContainerInstancesOutput, erro error) {
+func DescribeContainerInstances(clusterName *string, svc ecsiface.ECSAPI) (*ecs.DescribeContainerInstancesOutput, error) {
 	log.WithFields(log.Fields{
 		"function": "state.DescribeContainerInstances",
 	}).Info("Starting")

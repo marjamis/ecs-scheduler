@@ -1,11 +1,11 @@
 package engine
 
 import (
-	"ecs-scheduler/action"
-	"ecs-scheduler/schedulers"
-	"ecs-scheduler/state"
-
 	"flag"
+
+	"github.com/marjamis/ecs-scheduler/action"
+	"github.com/marjamis/ecs-scheduler/schedulers"
+	"github.com/marjamis/ecs-scheduler/state"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -38,7 +38,7 @@ func init() {
 }
 
 //ConnectToECS Simple function to set ECS Client settings, largely incase I change/need new clients.
-func ConnectToECS(region *string) (svc *ecs.ECS) {
+func ConnectToECS(region *string) *ecs.ECS {
 	return ecs.New(session.New(), aws.NewConfig().WithRegion(*region))
 }
 

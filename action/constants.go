@@ -2,5 +2,5 @@ package action
 
 const (
 	//SchedulerName The name used as the TaskGroup to show what scheduled the Task.
-	SchedulerName = string("svc.customECSscheduler")
+	SchedulerName = string("task.ecs-scheduler")
 )
