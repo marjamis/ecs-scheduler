@@ -1,8 +1,13 @@
+default:
+
 clean:
-	rm ./bin/ecs-scheduler.go
+	rm $(GOPATH)/bin/ecs-scheduler
 
-setup:
-	go get "github.com/aws/aws-sdk-go/aws" "github.com/aws/aws-sdk-go/aws/session" "github.com/aws/aws-sdk-go/service/ecs" "github.com/Sirupsen/logrus"
+local_build:
+	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o $(GOPATH)/bin/ecs-scheduler github.com/marjamis/ecs-scheduler
 
-build:
-	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o ./bin/ecs-scheduler.go ecs-scheduler
+test: # Test all packages within the repo with verbose output
+	go test -v -cover $(shell go list ./... | grep -v /vendor/)
+
+mintest: # Test all packages within the repo
+	go test -cover ./...
