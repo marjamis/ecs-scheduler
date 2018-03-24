@@ -6,7 +6,7 @@
 | CI/CD - Build | Semaphore CI | [![Build Status](https://semaphoreci.com/api/v1/marjamis/ecs-scheduler/branches/master/badge.svg)](https://semaphoreci.com/marjamis/ecs-scheduler) |
 | CI/CD - Build | Travis CI | [![Build Status](https://travis-ci.org/marjamis/ecs-scheduler.svg?branch=master)](https://travis-ci.org/marjamis/ecs-scheduler) |
 | CI/CD - Build | CircleCI |  [![CircleCI](https://circleci.com/gh/marjamis/ecs-scheduler/tree/master.svg?style=svg)](https://circleci.com/gh/marjamis/ecs-scheduler/tree/master) |
-| CI/CD - Build | Codeship | [![Coverage Status](https://coveralls.io/repos/github/marjamis/ecs-scheduler/badge.svg?branch=master)](https://coveralls.io/github/marjamis/ecs-scheduler?branch=master) |
+| CI/CD - Build | Codeship | [ ![Codeship Status for marjamis/ecs-scheduler](https://app.codeship.com/projects/ae328790-a0ce-0135-44ea-2622f92aca11/status?branch=master)](https://app.codeship.com/projects/254078) |
 | Coverage | Coveralls | [![Coverage Status](https://coveralls.io/repos/github/marjamis/ecs-scheduler/badge.svg?branch=master)](https://coveralls.io/github/marjamis/go_ecs-scheduler?branch=master) |
 | Coverge | CodeCov | [![codecov](https://codecov.io/gh/marjamis/ecs-scheduler/branch/master/graph/badge.svg)](https://codecov.io/gh/marjamis/ecs-scheduler) |
 | Coverage/Linting | Codacy | [![Codacy Badge](https://api.codacy.com/project/badge/Grade/16a51951592a4671aeb01707f74ad59f)](https://www.codacy.com/app/marjamis/ecs-scheduler?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=marjamis/ecs-scheduler&amp;utm_campaign=Badge_Grade) |
